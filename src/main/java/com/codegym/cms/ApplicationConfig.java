@@ -1,8 +1,11 @@
 package com.codegym.cms;
+
+import com.codegym.cms.formatter.ProvinceFormatter;
 import com.codegym.cms.repository.CustomerRepository;
-import com.codegym.cms.repository.impl.CustomerRepositoryImpl;
 import com.codegym.cms.service.CustomerService;
+import com.codegym.cms.service.ProvinceService;
 import com.codegym.cms.service.impl.CustomerServiceImpl;
+import com.codegym.cms.service.impl.ProvinceServiceImpl;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
@@ -11,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.JpaVendorAdapter;
@@ -25,6 +29,7 @@ import org.thymeleaf.spring4.SpringTemplateEngine;
 import org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 import org.thymeleaf.templatemode.TemplateMode;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
@@ -32,8 +37,8 @@ import java.util.Properties;
 
 @Configuration
 @EnableWebMvc
-@ComponentScan("com.codegym.cms.controller")
 @EnableTransactionManagement
+@ComponentScan("com.codegym.cms")
 @EnableJpaRepositories("com.codegym.cms.repository")
 public class ApplicationConfig extends WebMvcConfigurerAdapter implements ApplicationContextAware {
     private ApplicationContext applicationContext;
@@ -42,6 +47,22 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter implements Applic
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
+
+    @Override
+    public void addFormatters(FormatterRegistry registry){
+        registry.addFormatter(new ProvinceFormatter(applicationContext.getBean(ProvinceService.class)));
+    }
+
+    @Bean
+    public CustomerService customerService(){
+        return new CustomerServiceImpl();
+    }
+
+    @Bean
+    public ProvinceService provinceService(){
+        return new ProvinceServiceImpl();
+    }
+
 
     //Thymeleaf Configuration
     @Bean
@@ -61,24 +82,16 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter implements Applic
         templateEngine.setTemplateResolver(templateResolver());
         return templateEngine;
     }
-    @Bean
-    public CustomerService customerService(){
-        return new CustomerServiceImpl();
-    }
-    @Bean
-    public CustomerRepository customerRepository(){
-        return new CustomerRepositoryImpl();
-    }
+
     @Bean
     public ThymeleafViewResolver viewResolver(){
         ThymeleafViewResolver viewResolver = new ThymeleafViewResolver();
         viewResolver.setTemplateEngine(templateEngine());
-
         viewResolver.setCharacterEncoding("UTF-8");
         return viewResolver;
     }
 
-    //Config JPA
+    //JPA configuration
     @Bean
     @Qualifier(value = "entityManager")
     public EntityManager entityManager(EntityManagerFactory entityManagerFactory) {
@@ -101,7 +114,7 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter implements Applic
     public DataSource dataSource(){
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        dataSource.setUrl("jdbc:mysql://localhost:3306/quanlytinh?useUnicode=true&characterEncoding=UTF-8");
+        dataSource.setUrl("jdbc:mysql://localhost:3306/quanlytinh");
         dataSource.setUsername( "root" );
         dataSource.setPassword( "Minhtri29092014" );
         return dataSource;
